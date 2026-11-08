@@ -1,0 +1,24 @@
+# OSV-Scanner configuration (ADR 0009).
+# Every entry needs a reason; vulnerability ignores also need an expiry date (ignoreUntil)
+# so they are re-reviewed. Changes to this file are reviewed in the PR.
+
+# ── Licence overrides ─────────────────────────────────────────────────────────
+# These packages declare their licence in the legacy `"licenses": [...]` package.json
+# format, which the scanner reports as UNKNOWN. Verified MIT from their LICENSE files.
+[[PackageOverrides]]
+name = "busboy"
+ecosystem = "npm"
+license.override = ["MIT"]
+reason = "MIT per LICENSE file; legacy package.json 'licenses' field not parsed"
+
+[[PackageOverrides]]
+name = "streamsearch"
+ecosystem = "npm"
+license.override = ["MIT"]
+reason = "MIT per LICENSE file; legacy package.json 'licenses' field not parsed"
+
+# ── Ignored vulnerabilities (template) ────────────────────────────────────────
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-xxxx-xxxx"
+# ignoreUntil = 2027-01-31T00:00:00Z
+# reason = "Why it does not apply / why it cannot be fixed yet"

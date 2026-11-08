@@ -1,0 +1,108 @@
+# CI pipeline (ADR 0009): quality gates + security checks on every PR and push to main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  quality:
+    name: Quality (lint, format, typecheck, test, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test:cov
+      - run: pnpm build
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  commits:
+    name: Commit messages (commitlint)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - name: Lint commit messages in this PR
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm exec commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+
+  security:
+    name: Security
+    uses: ./.github/workflows/security-scans.yml
+    with:
+      full-history: ${{ github.event_name != 'pull_request' }}
+
+  dependency-review:
+    name: Dependency review (new dependencies in this PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: never
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, BlueOak-1.0.0, CC0-1.0, CC-BY-4.0, Python-2.0, Unlicense
+
+  workflow-lint:
+    name: Workflow lint (actionlint, zizmor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: actionlint
+        run: |
+          set -euo pipefail
+          version=1.7.12
+          archive="actionlint_${version}_linux_amd64.tar.gz"
+          base="https://github.com/rhysd/actionlint/releases/download/v${version}"
+          curl -fsSL -o "$archive" "$base/$archive"
+          curl -fsSL -o checksums.txt "$base/actionlint_${version}_checksums.txt"
+          grep " $archive\$" checksums.txt | sha256sum --check --strict
+          tar -xzf "$archive" actionlint
+          ./actionlint -color
+
+      - name: zizmor
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          advanced-security: false

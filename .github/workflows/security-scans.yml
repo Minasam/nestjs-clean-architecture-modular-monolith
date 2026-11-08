@@ -1,0 +1,109 @@
+# Reusable security scans (ADR 0009). Called by ci.yml (every PR / push to main)
+# and security-scheduled.yml (weekly, because new vulnerabilities appear daily).
+name: Security scans
+
+on:
+  workflow_call:
+    inputs:
+      full-history:
+        description: Scan the whole git history for secrets (otherwise only the PR's commits)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: Secrets (Gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Gitleaks (checksum-verified)
+        run: |
+          set -euo pipefail
+          version=8.30.1
+          archive="gitleaks_${version}_linux_x64.tar.gz"
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${version}"
+          curl -fsSL -o "$archive" "$base/$archive"
+          curl -fsSL -o checksums.txt "$base/gitleaks_${version}_checksums.txt"
+          grep " $archive\$" checksums.txt | sha256sum --check --strict
+          tar -xzf "$archive" gitleaks
+
+      - name: Scan
+        env:
+          FULL_HISTORY: ${{ inputs.full-history }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$FULL_HISTORY" == "true" || -z "$BASE_SHA" ]]; then
+            ./gitleaks git --redact --verbose --config .gitleaks.toml .
+          else
+            ./gitleaks git --redact --verbose --config .gitleaks.toml --log-opts="${BASE_SHA}..${HEAD_SHA}" .
+          fi
+
+  dependencies:
+    name: Dependencies (OSV-Scanner vulnerabilities + licences)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install OSV-Scanner (checksum-verified)
+        run: |
+          set -euo pipefail
+          version=2.7.0
+          bin=osv-scanner_linux_amd64
+          base="https://github.com/google/osv-scanner/releases/download/v${version}"
+          curl -fsSL -o "$bin" "$base/$bin"
+          curl -fsSL -o sums.txt "$base/osv-scanner_SHA256SUMS"
+          grep " $bin\$" sums.txt | sha256sum --check --strict
+          chmod +x "$bin" && mv "$bin" osv-scanner
+
+      - name: Scan lockfile
+        run: |
+          set -uo pipefail
+          licenses="$(paste -sd, .github/osv-licenses.txt)"
+          # OSV-Scanner exits non-zero on ANY finding; the gate below applies our severity policy.
+          ./osv-scanner scan source -L pnpm-lock.yaml --config osv-scanner.toml \
+            --licenses="$licenses" --format table || true
+          ./osv-scanner scan source -L pnpm-lock.yaml --config osv-scanner.toml \
+            --licenses="$licenses" --format json > osv-results.json || true
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Apply severity and licence policy
+        run: node scripts/ci/osv-gate.mjs osv-results.json
+
+  sast:
+    name: Code security (Semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: semgrep/semgrep:1.184.0@sha256:cc1b68266f267878b39739373ea9985b9a78e5d64497dd875c8de100b22695ed
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Scan
+        run: >-
+          semgrep scan
+          --config p/typescript
+          --config p/nodejs
+          --config p/expressjs
+          --config p/owasp-top-ten
+          --config p/secrets
+          --error
+          --metrics off
+          src

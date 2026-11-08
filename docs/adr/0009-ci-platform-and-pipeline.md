@@ -160,3 +160,15 @@ Weekly grouped updates for npm and GitHub Actions.
 - Negative: more CI jobs (they run in parallel, so wall-clock time stays about the same). Some **false positives** are inevitable; each is handled through an allowlist entry **with a reason** (and an expiry date for vulnerability ignores), reviewed in the PR.
 - Negative: GitHub-specific features (CodeQL, dependency review, push protection) need a paid licence on private repos; they are optional extras, not required gates.
 - Follow-ups: the repo admin enables push protection, Dependabot alerts and the branch ruleset in GitHub settings (step-by-step guide in `CONTRIBUTING.md`). M2 and M9 add the checks listed above.
+
+## Implementation notes (M0 B6, 2026-11-08)
+
+Details settled while implementing; the decision itself is unchanged.
+
+- **Reusable security workflow:** Gitleaks, OSV-Scanner and Semgrep live in `security-scans.yml` (`workflow_call`), called by `ci.yml` (PR range / full history on `main`) and `security-scheduled.yml` (weekly, full history), so the rules exist in one place.
+- **OSV severity gate:** OSV-Scanner fails on _any_ finding and has no severity threshold. `scripts/ci/osv-gate.mjs` applies the policy: fail on CVSS ≥ 7.0, unknown severity, or licence violations; report lower findings. On day one it reports 2 medium findings (`minimatch` GHSA-g3hv-75wg-m249, CVSS 6.9) that come only through dev tooling (ESLint, SWC CLI); the fix needs `minimatch` 11 upstream.
+- **Licence allowlist** lives in `.github/osv-licenses.txt`. It includes **MPL-2.0** (weak, file-level copyleft; `lightningcss`, a Vitest/Vite dev dependency, used unmodified). `busboy` and `streamsearch` are MIT but use the legacy `licenses` field, so they have reasoned overrides in `osv-scanner.toml`.
+- **Workflow lint runs on every PR**, not only when workflows change. It takes seconds, and path-filtered jobs can't be required status checks.
+- **Dependabot cooldown (7 days)** added after zizmor flagged its absence: hijacked releases are usually pulled within days; security updates are not delayed.
+- **Tool installs are checksum-verified** (Gitleaks, OSV-Scanner, actionlint), all actions are pinned to commit SHAs, and the Semgrep container is pinned by digest. Semgrep rule sets: `p/typescript`, `p/nodejs`, `p/expressjs`, `p/owasp-top-ten`, `p/secrets`.
+- **Verified locally before the first CI run:** Gitleaks (history clean; catches a planted token in a throwaway repo), OSV-Scanner + gate (passes; blocks a synthetic CVSS 9.8 finding and a GPL licence), actionlint and zizmor (clean). Semgrep and CodeQL could not be run locally (container registry unreachable from the dev machine); their first run is on the PR.

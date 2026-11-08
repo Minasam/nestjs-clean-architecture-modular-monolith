@@ -1,0 +1,5 @@
+# Gitleaks configuration (ADR 0009): default rule set.
+# If a false positive appears, add an [allowlist] entry here WITH a comment explaining why
+# it is safe; the change is reviewed in the PR.
+[extend]
+useDefault = true
