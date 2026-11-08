@@ -13,7 +13,11 @@
     "start": "nest start",
     "start:dev": "nest start --watch --type-check",
     "start:prod": "node dist/main.js",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --cache --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@nestjs/common": "^12.4.0",
@@ -23,11 +27,17 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^12.0.12",
     "@nestjs/schematics": "^12.0.13",
     "@swc/cli": "^0.8.2",
     "@swc/core": "^1.16.22",
     "@types/node": "^26.6.6",
-    "typescript": "~6.0.3"
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
   }
 }

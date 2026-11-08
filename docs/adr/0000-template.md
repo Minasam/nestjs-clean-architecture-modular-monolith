@@ -1,11 +1,11 @@
 # NNNN: <Short title of the decision>
 
-| | |
-|---|---|
-| **Status** | Proposed / Accepted / Superseded by [NNNN](NNNN-....md) / Deprecated |
-| **Date** | YYYY-MM-DD |
-| **Milestone** | MN |
-| **Requirements** | Rxx, Ryy |
+|                  |                                                                      |
+| ---------------- | -------------------------------------------------------------------- |
+| **Status**       | Proposed / Accepted / Superseded by [NNNN](NNNN-....md) / Deprecated |
+| **Date**         | YYYY-MM-DD                                                           |
+| **Milestone**    | MN                                                                   |
+| **Requirements** | Rxx, Ryy                                                             |
 
 ## Context
 
@@ -19,10 +19,12 @@ What problem are we solving? What forces and constraints apply?
 ## Options considered
 
 ### Option A: <name>
+
 - ✅ Pro
 - ❌ Con
 
 ### Option B: <name>
+
 - ✅ Pro
 - ❌ Con
 

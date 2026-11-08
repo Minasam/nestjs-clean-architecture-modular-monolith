@@ -1,11 +1,11 @@
 # 0003: Package manager
 
-| | |
-|---|---|
-| **Status** | Accepted |
-| **Date** | 2026-11-08 |
-| **Milestone** | M0 |
-| **Requirements** | R01 |
+|                  |            |
+| ---------------- | ---------- |
+| **Status**       | Accepted   |
+| **Date**         | 2026-11-08 |
+| **Milestone**    | M0         |
+| **Requirements** | R01        |
 
 ## Context
 
@@ -21,6 +21,7 @@ The package manager affects install speed (locally and in CI), lockfile reliabil
 ## Options considered
 
 ### Option A: pnpm
+
 - ✅ Strict `node_modules` layout: undeclared (phantom) dependencies fail to resolve
 - ✅ Fast installs and a content-addressable store, so less disk use and good CI caching
 - ✅ First-class workspaces if we ever move to ADR 0002 Option B
@@ -29,16 +30,19 @@ The package manager affects install speed (locally and in CI), lockfile reliabil
 - ❌ The strict layout occasionally breaks badly-packaged libraries (fixable with `publicHoistPattern`)
 
 ### Option B: npm
+
 - ✅ Comes with Node; zero setup; most familiar
 - ❌ Flat `node_modules` allows phantom dependencies
 - ❌ Slower installs; weaker monorepo ergonomics
 
 ### Option C: Yarn (Berry)
+
 - ✅ Fast; Plug'n'Play gives strictness
 - ❌ PnP is incompatible with some tooling; `nodeLinker: node-modules` loses the strictness
 - ❌ Smaller share of the NestJS ecosystem
 
 ### Option D: Bun (as package manager)
+
 - ✅ Very fast installs
 - ❌ Running Nest on Node while installing with Bun adds a second toolchain; less mature lockfile and CI story
 
@@ -58,11 +62,11 @@ The package manager affects install speed (locally and in CI), lockfile reliabil
 
 **Options:**
 
-| Option | How | Pros | Cons |
-|---|---|---|---|
-| **A: pnpm's own version management** | Install pnpm once (`npm install -g pnpm`). pnpm reads `"packageManager": "pnpm@x.y.z"` in `package.json` and automatically switches to that exact version for this project. | No extra tool; pnpm officially supports this; the version is still pinned for everyone | Needs one global install of pnpm (any version) |
-| B: corepack as a separate package | `npm install -g corepack && corepack enable` | Same behaviour as before | One more tool to install; corepack was dropped from Node core and its future is uncertain |
-| C: pnpm standalone installer | `curl -fsSL https://get.pnpm.io/install.sh \| sh -` | Doesn't need npm | Runs a remote script; per-OS differences |
+| Option                               | How                                                                                                                                                                         | Pros                                                                                   | Cons                                                                                      |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **A: pnpm's own version management** | Install pnpm once (`npm install -g pnpm`). pnpm reads `"packageManager": "pnpm@x.y.z"` in `package.json` and automatically switches to that exact version for this project. | No extra tool; pnpm officially supports this; the version is still pinned for everyone | Needs one global install of pnpm (any version)                                            |
+| B: corepack as a separate package    | `npm install -g corepack && corepack enable`                                                                                                                                | Same behaviour as before                                                               | One more tool to install; corepack was dropped from Node core and its future is uncertain |
+| C: pnpm standalone installer         | `curl -fsSL https://get.pnpm.io/install.sh \| sh -`                                                                                                                         | Doesn't need npm                                                                       | Runs a remote script; per-OS differences                                                  |
 
 CI uses `pnpm/action-setup`, which reads the `packageManager` field directly with any option. The Dockerfile (M2) installs the pinned version with `npm install -g pnpm@<version>`.
 

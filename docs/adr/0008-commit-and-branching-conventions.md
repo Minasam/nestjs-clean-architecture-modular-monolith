@@ -1,10 +1,10 @@
 # 0008: Commit and branching conventions
 
-| | |
-|---|---|
-| **Status** | Accepted |
-| **Date** | 2026-11-08 |
-| **Milestone** | M0 |
+|                  |               |
+| ---------------- | ------------- |
+| **Status**       | Accepted      |
+| **Date**         | 2026-11-08    |
+| **Milestone**    | M0            |
 | **Requirements** | R02, R43, R50 |
 
 ## Context
@@ -20,6 +20,7 @@ A readable history makes reviews and releases easier, and later allows automated
 ## Options considered
 
 ### Commit format
+
 - **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`, `build:`, with an optional `(scope)`)
   - ✅ Industry standard; enables automated changelogs and semver (M9)
   - ✅ Scopes map naturally to modules (`feat(orders): …`)
@@ -29,6 +30,7 @@ A readable history makes reviews and releases easier, and later allows automated
   - ❌ No automation possible; inconsistent history
 
 ### Local enforcement
+
 - **Husky + lint-staged + commitlint**
   - ✅ Standard JS-ecosystem setup; runs lint/format only on staged files (fast)
   - ✅ `commit-msg` hook rejects non-conventional messages
@@ -40,6 +42,7 @@ A readable history makes reviews and releases easier, and later allows automated
   - ❌ Slow feedback; noisy fix-up commits
 
 ### Branching strategy
+
 - **GitHub Flow**: `main` is the only long-lived branch and is always deployable. Work happens on a branch, goes through a PR (CI + review), is merged to `main`, and the branch is deleted.
   - ✅ Simple, widely known; fits continuous delivery to multiple environments
   - ✅ Built-in review step through PRs
@@ -54,6 +57,7 @@ A readable history makes reviews and releases easier, and later allows automated
   - ❌ Branches drift apart; production runs code combinations never tested together. Considered an anti-pattern.
 
 ### Branch size (within GitHub Flow)
+
 - **One branch per milestone** (`feat/mN-<name>`, one PR)
   - ✅ Keeps a milestone's decisions, code and docs together as one reviewable unit; commits inside the PR still show each slice
   - ❌ Larger PRs
@@ -64,12 +68,15 @@ A readable history makes reviews and releases easier, and later allows automated
 ## Decision
 
 **Chosen:**
+
 - **Conventional Commits**, enforced by **commitlint** (`@commitlint/config-conventional`).
 - **Husky** hooks: `pre-commit` runs lint-staged (ESLint `--fix` + Prettier on staged files); `commit-msg` runs commitlint.
 - **GitHub Flow**: one branch per milestone (`feat/mN-<name>`), or per topic for work outside milestones (`fix/<topic>`, `docs/<topic>`), merged to `main` through a reviewed PR with green CI. Large milestones (for example M3, M4) may be split into per-slice branches if the PR gets too big.
 
 ### Release strategy (decided later)
+
 GitHub Flow requires that **whatever is on `main` is safe to deploy to production**. How a merged but unapproved feature is kept away from production users is a release-strategy question, decided in an M9 ADR. The intended direction:
+
 - **Feature flags** (R50, M7): merge and deploy early, release by switching the flag on, per environment and gradually.
 - **Testing before merge** on preview or staging environments for smaller changes.
 - **Revert** as the emergency fallback.

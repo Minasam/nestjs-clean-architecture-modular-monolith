@@ -1,11 +1,11 @@
 # 0005: Test runner
 
-| | |
-|---|---|
-| **Status** | Accepted |
-| **Date** | 2026-11-08 |
-| **Milestone** | M0 |
-| **Requirements** | R03, R30 |
+|                  |            |
+| ---------------- | ---------- |
+| **Status**       | Accepted   |
+| **Date**         | 2026-11-08 |
+| **Milestone**    | M0         |
+| **Requirements** | R03, R30   |
 
 ## Context
 
@@ -22,6 +22,7 @@ We need one test runner for unit tests (M0/M1) and integration tests with real i
 ## Options considered
 
 ### Option A: Vitest + `unplugin-swc`
+
 - ✅ Very fast startup and watch mode (Vite-based, on-demand transforms)
 - ✅ Jest-compatible API (`describe/it/expect/vi.fn`), so the learning cost is low
 - ✅ Native TS/ESM; built-in V8 coverage with thresholds
@@ -31,6 +32,7 @@ We need one test runner for unit tests (M0/M1) and integration tests with real i
 - ❌ Fewer NestJS-specific examples online than Jest
 
 ### Option B: Jest + `@swc/jest`
+
 - ✅ The NestJS CLI default; most tutorials and examples use it
 - ✅ Mature ecosystem
 - ❌ Slower startup and watch, even with SWC
@@ -38,6 +40,7 @@ We need one test runner for unit tests (M0/M1) and integration tests with real i
 - ❌ Module mocking and config (moduleNameMapper for path aliases) are more verbose
 
 ### Option C: Node's built-in test runner (`node:test`)
+
 - ✅ Zero dependencies
 - ❌ No built-in TS transform with decorator metadata; weaker mocking, coverage thresholds and DX
 

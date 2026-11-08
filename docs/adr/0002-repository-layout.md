@@ -1,21 +1,22 @@
 # 0002: Repository layout
 
-| | |
-|---|---|
-| **Status** | Accepted |
-| **Date** | 2026-11-08 |
-| **Milestone** | M0 |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Status**       | Accepted                |
+| **Date**         | 2026-11-08              |
+| **Milestone**    | M0                      |
 | **Requirements** | R01, R06, R07, R09, R45 |
 
 ## Context
 
 The physical layout of the repo decides:
+
 - how **module boundaries** are enforced (R09),
 - how easily a module can be **extracted into a microservice** (R06),
 - how we produce **separate API and worker deployments** from the same code (R45),
 - how much build and tooling overhead every developer pays daily.
 
-Clean architecture (R07) governs layers *inside* a module. This ADR is about how modules and apps are arranged in the repo.
+Clean architecture (R07) governs layers _inside_ a module. This ADR is about how modules and apps are arranged in the repo.
 
 ## Decision drivers
 
@@ -27,6 +28,7 @@ Clean architecture (R07) governs layers *inside* a module. This ADR is about how
 ## Options considered
 
 ### Option A: Single NestJS app, folder per module, boundaries enforced by lint
+
 ```
 src/
   main.ts                 # API entrypoint (worker.ts added in M5)
@@ -38,6 +40,7 @@ src/
       <module>.module.ts
       public-api.ts       # the only file other modules may import
 ```
+
 - ✅ Simplest setup: one `package.json`, one tsconfig, one build
 - ✅ Fastest feedback loop (single SWC build, single test run)
 - ✅ Multiple entrypoints are just extra `main` files bootstrapping different root modules
@@ -46,10 +49,12 @@ src/
 - ❌ All modules share one dependency set; per-module dependency versions aren't possible
 
 ### Option B: pnpm workspaces (one package per module)
+
 ```
 apps/api  apps/worker
 packages/shared-kernel  packages/<module>   # each with its own package.json
 ```
+
 - ✅ Physical isolation: a module can only import packages it declares
 - ✅ Extraction is close to "move the package and add an app"
 - ❌ Build orchestration needed (TS project references, build order, watch mode across packages)
@@ -57,12 +62,14 @@ packages/shared-kernel  packages/<module>   # each with its own package.json
 - ❌ Slower dev loop; hot reload across packages is fiddly
 
 ### Option C: Nest CLI monorepo mode (`apps/` + `libs/`)
+
 - ✅ Built into the Nest CLI, no extra tools; multiple apps supported natively
 - ✅ A lib per module, with path aliases
 - ❌ Isolation still relies on lint (same as A), with more config (`nest-cli.json` projects, per-app tsconfigs)
 - ❌ Defaults to webpack bundling per app, which differs from the standard Nest build
 
 ### Option D: Nx workspace
+
 - ✅ Best-in-class boundary enforcement (`@nx/enforce-module-boundaries` with tags), affected-only CI, caching
 - ✅ Generators for new modules
 - ❌ Heavy dependency and its own learning curve; the template becomes an Nx template
@@ -73,7 +80,8 @@ packages/shared-kernel  packages/<module>   # each with its own package.json
 **Chosen: Option A.** A single NestJS app with a folder per module and lint-enforced boundaries.
 
 Reasoning:
-- The *logical* contract between modules (a facade in `public-api.ts`, versioned integration events) is what makes extraction easy, not the physical package boundary. When a module is extracted, its facade gets an HTTP/gRPC adapter and its events go through the broker. The folder layout doesn't change that work.
+
+- The _logical_ contract between modules (a facade in `public-api.ts`, versioned integration events) is what makes extraction easy, not the physical package boundary. When a module is extracted, its facade gets an HTTP/gRPC adapter and its events go through the broker. The folder layout doesn't change that work.
 - Lint-based boundary rules run in CI and the pre-commit hook, so violations are blocked before merge. That's close to compiler-level safety at a fraction of the cost.
 - It keeps the template approachable and the dev loop fast.
 

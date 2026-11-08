@@ -1,15 +1,15 @@
 # 0001: Record architecture decisions
 
-| | |
-|---|---|
-| **Status** | Accepted |
-| **Date** | 2026-11-08 |
-| **Milestone** | M0 |
-| **Requirements** | R05 |
+|                  |            |
+| ---------------- | ---------- |
+| **Status**       | Accepted   |
+| **Date**         | 2026-11-08 |
+| **Milestone**    | M0         |
+| **Requirements** | R05        |
 
 ## Context
 
-This repository is a template for complex projects. People adopting it need to know not only *what* was built but *why*: which alternatives were rejected and which trade-offs were accepted. Without that record, decisions get re-argued, or reversed by someone who doesn't know the original constraints. Work is also done in sessions with an AI assistant that has no memory between sessions unless the reasoning is written down.
+This repository is a template for complex projects. People adopting it need to know not only _what_ was built but _why_: which alternatives were rejected and which trade-offs were accepted. Without that record, decisions get re-argued, or reversed by someone who doesn't know the original constraints. Work is also done in sessions with an AI assistant that has no memory between sessions unless the reasoning is written down.
 
 ## Decision drivers
 
@@ -20,17 +20,20 @@ This repository is a template for complex projects. People adopting it need to k
 ## Options considered
 
 ### Option A: ADRs in the repo (MADR-style Markdown)
+
 - ✅ Versioned with the code; reviewed in the same PR as the change
 - ✅ Well-known format (Nygard / MADR); tooling is optional
 - ✅ Readable by both humans and AI assistants in every session
 - ❌ Needs discipline to keep up to date
 
 ### Option B: External wiki (Confluence, Notion, GitHub Wiki)
+
 - ✅ Rich editing; easy for non-developers
 - ❌ Drifts from the code; not part of the PR review
 - ❌ Not shipped with the template to people who adopt it
 
 ### Option C: No formal records (commit messages, PR descriptions)
+
 - ✅ Zero overhead
 - ❌ Reasoning is scattered and hard to find; alternatives are rarely recorded
 
