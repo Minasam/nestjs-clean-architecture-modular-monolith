@@ -50,7 +50,11 @@ Note: SWC itself cannot type-check (its experimental checker was abandoned). The
 | `pnpm typecheck`, pre-commit, CI | `tsc --noEmit` | The authoritative gate before commit or merge |
 | `pnpm build` (production) | SWC only | Already type-checked by the gate above |
 
-The TypeScript version will be pinned in B1, after checking that decorator metadata works under the chosen TS major (7.x, or 5.x/6.x if 7 is incompatible). The result will be recorded here.
+**TypeScript version (verified in B1, 2026-11-08): pinned to `~6.0.3`.**
+- TypeScript **7.0.2** (latest) was tried first and rejected: the Nest CLI fails with *"TypeScript 7.0 ships the `tsc` executable only; the compiler API is expected to return in 7.1. Please install TypeScript 6"*. TS 7 also removed `baseUrl`.
+- With TS 6: `tsc --noEmit` passes, `nest build` (SWC) compiles, the app boots, and a constructor-injection check (`@Injectable` provider injected into another) resolves correctly, confirming SWC emits decorator metadata.
+- TS 6 no longer includes `@types/*` packages automatically, so `tsconfig.json` sets `"types": ["node"]` explicitly.
+- Revisit when TypeScript 7.1 ships the compiler API and the Nest CLI supports it (Dependabot will propose the bump; CI verifies it).
 
 ## Consequences
 

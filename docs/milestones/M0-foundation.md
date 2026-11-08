@@ -26,7 +26,7 @@ No code is written until every Phase A ADR is accepted.
 |---|---|---|---|
 | [0001](../adr/0001-record-architecture-decisions.md) | Record architecture decisions | MADR-style ADRs in `docs/adr/` | Accepted |
 | [0002](../adr/0002-repository-layout.md) | Repository layout | Single NestJS app, folder per module, lint-enforced boundaries | Accepted |
-| [0003](../adr/0003-package-manager.md) | Package manager | pnpm (via corepack) | Accepted |
+| [0003](../adr/0003-package-manager.md) | Package manager | pnpm (installed with npm, version pinned by `packageManager`; Amendment 1) | Accepted |
 | [0004](../adr/0004-nodejs-runtime-version.md) | Node.js version | Node 26 (Active LTS) | Accepted |
 | [0005](../adr/0005-test-runner.md) | Test runner | Vitest + unplugin-swc | Accepted |
 | [0006](../adr/0006-build-and-compilation.md) | Build and compilation | SWC to build, `tsc --noEmit` to typecheck; `--type-check` in dev | Accepted |
@@ -41,13 +41,27 @@ Written for the recommended options; adjusted if any ADR is changed.
 
 | # | Slice | Output |
 |---|---|---|
-| B1 | Scaffold | NestJS app (latest stable), strict `tsconfig`, empty `AppModule` (hello-world removed), `.nvmrc`, `engines`, `packageManager`, `.editorconfig`, `.gitignore` |
+| B1 | Scaffold | NestJS app (latest stable), strict `tsconfig`, empty `AppModule` (hello-world removed), `.nvmrc`, `engines`, `packageManager`, and the repository hygiene files (section 4.1) |
 | B2 | Lint and format | ESLint flat config, Prettier, scripts `lint`, `format`, `format:check`, `typecheck` |
 | B3 | Tests | Vitest + unplugin-swc, coverage thresholds, smoke test that `AppModule` compiles; scripts `test`, `test:watch`, `test:cov` |
 | B4 | Git hooks | Husky, lint-staged, commitlint (conventional config) |
 | B5 | Claude Code | `CLAUDE.md`, `.claude/settings.json` (permission allowlist, format/lint hook), `.claude/hooks/format-lint.sh` |
 | B6 | CI and security | `.github/workflows/ci.yml` (quality, commits, secrets, dependencies, SAST, dependency review, workflow lint), `codeql.yml`, `security-scheduled.yml`, `.github/dependabot.yml`, `.gitleaks.toml`, `osv-scanner.toml`, `.github/pull_request_template.md`, `CONTRIBUTING.md` (incl. GitHub settings guide) |
 | B7 | Docs | `README.md` quick start; `docs/architecture.md` placeholder; requirement statuses updated |
+
+### 4.1 Repository hygiene files
+
+Small, conventional choices: documented here rather than in an ADR (per ADR 0001).
+
+| File | Purpose | Contents / rules |
+|---|---|---|
+| `.gitignore` | Keep regenerable, personal and secret files out of git | Dependencies (`node_modules/`); build output (`dist/`, `*.tsbuildinfo`); test output (`coverage/`, `reports/`); **secrets** (`.env`, `.env.*` except `.env.example`, `*.pem`, `*.key`, `*.p12`); logs; tool caches (`.eslintcache`, `.swc/`, `.cache/`); OS files (`.DS_Store`, `Thumbs.db`); editors (`.idea/`, `.vscode/*` except the shared files below); Claude personal files (`.claude/settings.local.json`, `CLAUDE.local.md`). Later milestones append their own entries (for example local Docker data in M2). |
+| `.gitattributes` | Same line endings on every OS | `* text=auto eol=lf`, so Windows commits don't show every line as changed |
+| `.editorconfig` | Basic editor rules for any editor | UTF-8, LF, 2-space indent, final newline, trim trailing whitespace |
+| `.vscode/extensions.json` | VS Code suggests the project's extensions | ESLint, Prettier, Vitest, EditorConfig |
+| `.vscode/settings.json` | Shared VS Code behaviour | Format on save with Prettier; ESLint fixes on save; use the workspace TypeScript version |
+
+Secrets are protected in four layers: `.gitignore` → Gitleaks in CI (ADR 0009) → GitHub push protection → Claude Code deny rules (ADR 0010). `.dockerignore` comes with the Dockerfile in M2.
 
 ## 5. Definition of done
 

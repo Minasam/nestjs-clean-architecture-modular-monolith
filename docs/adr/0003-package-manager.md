@@ -51,3 +51,25 @@ The package manager affects install speed (locally and in CI), lockfile reliabil
 - Positive: strict, fast, reproducible installs; easy CI caching.
 - Negative: contributors run `corepack enable` once; this is documented in the README.
 - Follow-ups: the Dockerfile (M2) and CI (ADR 0009) use corepack-pinned pnpm with `--frozen-lockfile`.
+
+## Amendment 1 (2026-11-08): how pnpm is installed (Status: Accepted)
+
+**What changed:** while installing Node 26 (ADR 0004), we found that **Node 25+ no longer bundles corepack**. A fresh Node 26.13.0 install contains only `node`, `npm` and `npx`. The decision (pnpm) is unchanged; only the installation mechanism above is affected.
+
+**Options:**
+
+| Option | How | Pros | Cons |
+|---|---|---|---|
+| **A: pnpm's own version management** | Install pnpm once (`npm install -g pnpm`). pnpm reads `"packageManager": "pnpm@x.y.z"` in `package.json` and automatically switches to that exact version for this project. | No extra tool; pnpm officially supports this; the version is still pinned for everyone | Needs one global install of pnpm (any version) |
+| B: corepack as a separate package | `npm install -g corepack && corepack enable` | Same behaviour as before | One more tool to install; corepack was dropped from Node core and its future is uncertain |
+| C: pnpm standalone installer | `curl -fsSL https://get.pnpm.io/install.sh \| sh -` | Doesn't need npm | Runs a remote script; per-OS differences |
+
+CI uses `pnpm/action-setup`, which reads the `packageManager` field directly with any option. The Dockerfile (M2) installs the pinned version with `npm install -g pnpm@<version>`.
+
+**Chosen: Option A.** Developers run `npm install -g pnpm` once; the `packageManager` field still guarantees everyone runs the same pnpm version.
+
+## Note (2026-11-08): dependency install scripts are blocked by default
+
+pnpm does **not** run dependencies' install scripts (`postinstall` and so on) unless they are explicitly approved. This is a supply-chain protection, because install scripts are a common malware vector. Approved packages are listed in `pnpm-workspace.yaml` under `allowBuilds` (added with `pnpm approve-builds <pkg>`); every addition is reviewed in its PR.
+
+Currently approved: `@swc/core` (sets up its native binary).
