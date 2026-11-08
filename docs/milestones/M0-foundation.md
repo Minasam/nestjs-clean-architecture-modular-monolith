@@ -2,7 +2,7 @@
 
 |                  |                                                                                                                    |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Status**       | Phase A done (all ADRs accepted); Phase B in progress                                                              |
+| **Status**       | Phase B slices B1–B7 committed; awaiting PR (CI first run) and review                                              |
 | **Branch**       | `feat/m0-foundation`                                                                                               |
 | **Requirements** | R01, R02, R03 (runner), R04, R05, R43 (basic CI), R44 (CI security checks); see [requirements](../requirements.md) |
 | **Depends on**   | –                                                                                                                  |
@@ -66,15 +66,24 @@ Secrets are protected in four layers: `.gitignore` → Gitleaks in CI (ADR 0009)
 ## 5. Definition of done
 
 - [x] All Phase A ADRs `Accepted`
-- [ ] `pnpm install && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:cov && pnpm build` pass locally
-- [ ] `pnpm start:dev` boots the app
-- [ ] A non-conventional commit message is rejected; a lint error blocks the pre-commit hook
-- [ ] Editing a TS file through Claude Code triggers the format/lint hook
+- [x] `pnpm install && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:cov && pnpm build` pass locally
+- [x] The app boots (verified with the production build in B1; `start:dev` uses the same SWC build plus watch)
+- [x] A non-conventional commit message is rejected; a lint error blocks the pre-commit hook (verified in B4)
+- [x] Editing a TS file through Claude Code triggers the format/lint hook (verified live in B5)
 - [ ] CI is green on the PR, including all security jobs
-- [ ] A deliberately committed fake secret is caught by Gitleaks (verified, then removed)
+- [x] A deliberately committed fake secret is caught by Gitleaks (verified in a throwaway repo, so no secret enters this repo's history)
 - [ ] `/code-review` run, findings addressed, user review done, merged to `main`
-- [ ] `docs/requirements.md` statuses updated
+- [x] `docs/requirements.md` statuses updated
 
-## 6. Out of scope (later milestones)
+## 6. Implementation notes
+
+- **TypeScript pinned to `~6.0.3`:** TS 7.0 lacks the compiler API the Nest CLI needs (ADR 0006).
+- **pnpm install scripts** are blocked by default; `@swc/core` approved (ADR 0003 note).
+- **Prettier formats Markdown too**, so tables in docs are column-aligned in the raw text.
+- **Git hooks need Node 26:** `~/.config/husky/init.sh` runs `nvm use` before hooks (documented in `CONTRIBUTING.md`).
+- **CI details** (OSV severity gate, licence allowlist incl. MPL-2.0, Dependabot cooldown, workflow lint on every PR): see the ADR 0009 implementation notes.
+- **Known non-blocking finding:** `minimatch` GHSA-g3hv-75wg-m249 (CVSS 6.9, dev tooling only); waiting for upstream to adopt `minimatch` 11.
+
+## 7. Out of scope (later milestones)
 
 Module boundaries and the shared kernel (M1), config and Docker (M2, including image scanning), observability (M3), the full CI/CD pipeline with SBOM, signing and DAST (M9).
